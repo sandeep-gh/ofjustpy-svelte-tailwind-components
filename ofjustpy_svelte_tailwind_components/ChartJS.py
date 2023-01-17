@@ -130,16 +130,58 @@ import ofjustpy  as oj
 
 # """))
 
-chart_options = Dict(hjson.loads("""
-{
-                               title: {
-                                 display: true,
-                                 text: 'World population per region (in millions)'
-                               }
-                             }
+# chart_options = Dict(hjson.loads("""
+# {
+# title: {
+# display: true,
+# text: 'World population per region (in millions)'
+# }
+# options: {
+# scales: {
+# x: { title: { text: "xlabel", display: true}
+# }
+# }
+# }
+# }
                            
-""")
-               )
+# """))
+# chart_options = Dict(hjson.loads("""
+
+# {
+#     title: {
+#       display: true,
+#       text: 'World population per region (in millions)'
+#     },
+#     scales : {
+#       x: {  title: { text: "hello", display: true}}
+#     }
+    
+#   }"""
+# ))
+
+# We need options to be part of json.
+# to handle updates coming from chartjs-customizer
+chart_options = Dict(hjson.loads("""
+{options: {
+    title: {
+      display: true,
+      text: 'World population per region (in millions)'
+    },
+    scales : {
+      x: {  title: { text: "hello", display: true}}
+    }
+    
+  }
+}"""
+))      
+      
+#                )
+# chart_options = Dict(hjson.loads("""
+# {'title': {'display': True, 'text': 'World population per region (in millions)'}, 'options': {'scales': {'x': {'axis': 'new-axis-boos'}}}}"""
+#                                  )
+#                      )
+
+
 chart_data = Dict(hjson.loads(
 """
 {
@@ -200,7 +242,18 @@ class ChartJS(JustpyBaseComponent):
     def __repr__(self):
         return f'{self.__class__.__name__}( vue_type: {self.vue_type})'
 
+
+    def update_chart(self, spath, value):
+        try:
+            oj.dupdate(chart_options, spath, value)
+        except Exception as e:
+            # uvicorn runtime without Crash can eat up exception
+            print ("exception in chart_update ", e)
+            raise e
+                                 
+        
     def convert_object_to_dict(self):
+        print ("chartJS: convert_object_to_dict: ",  chart_options)
         d = {}
         d['vue_type'] = self.vue_type
         # Add id if CSS transition is defined
@@ -208,8 +261,7 @@ class ChartJS(JustpyBaseComponent):
 
         d['chart_type'] = 'line'
         
-        d['chart_options'] = chart_options
-        
+        d['chart_options'] = chart_options.options
         
         d['chart_data'] =  chart_data
 
@@ -228,7 +280,7 @@ class ChartJS(JustpyBaseComponent):
     
 ChartJS_ = genStubFunc(ChartJS, [])
 
-def chart_in_box():
-    cjs_ = ChartJS_("mychart", chart_name = "Pop chart")
-    chart_cbox_ = oj.Div_("cbox", cgens=[cjs_], pcp = [ppos.relative])
-    return chart_cbox_
+# def chart_in_box():
+#     cjs_ = ChartJS_("mychart", chart_name = "Pop chart")
+#     chart_cbox_ = oj.Div_("cbox", cgens=[cjs_], pcp = [ppos.relative])
+#     return chart_cbox_
